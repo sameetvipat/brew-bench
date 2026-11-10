@@ -6,7 +6,7 @@
  * 2. Step notifications while the screen is locked, and bringing the app back when one is tapped.
  * Your brews and beans are not here: they live in the page's own storage.
  */
-const CACHE = "brew-bench-v2"; // bump to drop old copies (v2: network first, replaces v1's cache first)
+const CACHE = "brew-bench-v3"; // bump to drop old copies (v2: network first, replaces v1's cache first)
 
 const APP_FILES = [
   "./",
@@ -26,6 +26,7 @@ const APP_FILES = [
   "js/journal.js",
   "js/shelf.js",
   "js/log.js",
+  "js/backup.js",
   "js/state.js",
   "js/recipes.js",
   "js/icons.js",

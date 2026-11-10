@@ -129,6 +129,7 @@
         <button class="btn ghost" id="skipLog">Skip</button>
       </div>
       <p class="muted small" id="saveMsg" aria-live="polite"></p>
+      <p class="small" id="backupNudge" hidden></p>
       <div class="btns" id="afterSave" hidden>
         <a class="btn primary" id="doneBack" href="#">Back to recipes</a>
         <button class="btn ghost" id="brewAgain">Brew again</button>
@@ -158,6 +159,18 @@
     <h1>Journal</h1>
     <div id="journalList"></div>
     <p class="muted small" id="logStatus"></p>
+
+    <!-- Backup (js/backup.js): automatic file where Chrome allows it, otherwise share/download -->
+    <section class="card-box" id="backupBox">
+      <h2>Backup</h2>
+      <p class="muted small" id="backupStatus"></p>
+      <div class="btns">
+        <button type="button" class="btn small" id="backupPick">Choose backup file</button>
+        <button type="button" class="btn small" id="backupNow">Back up now</button>
+        <label class="btn small ghost">Restore<input type="file" id="restoreFile" accept=".json,application/json" hidden></label>
+      </div>
+      <p class="small" id="restoreMsg"></p>
+    </section>
   </section>
 
   <!-- ===== Bottom tabs (js/router.js shows them on home, recipes, beans, journal) ===== -->

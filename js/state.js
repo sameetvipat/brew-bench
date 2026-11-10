@@ -1,7 +1,9 @@
 /* Everything saved on this device, plus session state shared between screens. */
 import { BREWERS } from "./recipes.js";
 
-const STORAGE_KEY = "brew-bench-v4";
+import { scheduleBackup } from "./backup.js";
+
+export const STORAGE_KEY = "brew-bench-v4";
 
 export const CUP_CHOICES = [1, 2, 3, 4];
 
@@ -15,6 +17,7 @@ export const CUP_CHOICES = [1, 2, 3, 4];
  * - beans     bean register: [{id, name, roast, g, left, rating 0–5}]
  * - run       brew in progress {recipeId, startedAt, batch}, so a 12 h cold brew survives closing the page
  * - name      your first name, for the greeting ("" = none)
+ * - lastBackup   when the backup file was last written; backupAsked: you said "Not now" to automatic backup
 
  */
 // shortcut: tweaks and bean shelf live on this device only; sync them via db if you brew on 2 devices
@@ -29,9 +32,11 @@ export const session = {
   stage: "ready", // brew screen stage: ready, brewing, done
 };
 
-export function save() {
+/** Save to this phone. Every save also updates the backup file a moment later, unless told not to. */
+export function save(backup = true) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (backup) scheduleBackup();
   } catch {
     // storage full or blocked: the app keeps working for this visit
   }
@@ -76,5 +81,7 @@ function load() {
     beans: Array.isArray(saved.beans) ? saved.beans.filter((b) => b && typeof b.name === "string" && b.left >= 0) : [],
     run: run && typeof run.recipeId === "string" && typeof run.startedAt === "number" ? run : null,
     name: typeof saved.name === "string" ? saved.name.slice(0, 40) : "",
+    lastBackup: typeof saved.lastBackup === "number" ? saved.lastBackup : null,
+    backupAsked: saved.backupAsked === true,
   };
 }

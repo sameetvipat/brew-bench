@@ -7,7 +7,8 @@ import { initJournal } from "./journal.js";
 import { initBrew } from "./brew.js";
 import { initTimer } from "./timer.js";
 import { initShelf } from "./shelf.js";
-import { initLog, startSync } from "./log.js";
+import { initLog } from "./log.js";
+import { initBackup } from "./backup.js";
 import { initRouter, route } from "./router.js";
 
 try {
@@ -26,10 +27,10 @@ initShelf();
 initBrew();
 initTimer();
 initLog();
+initBackup();
 initRouter();
 
 route();
-startSync();
 
 // offline copy of the app and step notifications; fine to fail (e.g. inside a sandboxed frame)
 navigator.serviceWorker?.register("sw.js").catch(() => {});
