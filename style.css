@@ -202,28 +202,13 @@ details.card-box { gap: 0; }
 details.card-box[open] { gap: 12px; }
 details > summary { list-style: none; cursor: pointer; font-weight: 600; display: flex; justify-content: space-between; }
 details > summary::-webkit-details-marker { display: none; }
+details > summary .muted { margin: 0 auto 0 8px; }
 details > summary::after { content: "⌄"; color: var(--muted); transition: transform .15s; }
 details[open] > summary::after { transform: rotate(180deg); }
 
 .label { font-size: .78rem; color: var(--muted); }
 .f { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-/* timer */
-.dial { position: relative; width: min(240px, 68vw); aspect-ratio: 1; }
-.dial svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
-.dial circle { fill: none; stroke-width: 6; }
-.dial .track { stroke: var(--raised); }
-#arc { stroke: var(--accent); stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100; transition: stroke-dashoffset .25s linear; }
-.dial .tick { fill: var(--surface); stroke: var(--muted); stroke-width: 2; }
-.dial .tick.on { fill: var(--accent); stroke: var(--accent); }
-.dial-c { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-#clock { font-size: 3.2rem; font-weight: 650; line-height: 1; font-variant-numeric: tabular-nums; }
-#clock.long { font-size: 2rem; }
-#left { margin-top: 6px; font-size: .9rem; }
-#now { font-size: 1.35rem; font-weight: 650; line-height: 1.3; max-width: 34ch; }
-.pop { animation: pop .3s ease-out; }
-@keyframes pop { from { opacity: .2; transform: translateY(4px); } }
 
 .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .steps li { display: flex; gap: 12px; padding: 10px 12px; border-radius: 12px; background: var(--card); color: var(--muted); }
@@ -239,9 +224,25 @@ details[open] > summary::after { transform: rotate(180deg); }
 #brew:not([data-stage="done"]) [data-for="done"] { display: none; }
 #brew .stage { animation: enter .25s ease-out; }
 
-/* brewing: timer fills the screen */
-.timer { align-items: center; text-align: center; justify-content: center; min-height: calc(100vh - 140px); gap: 16px; }
-#now { font-size: 1.7rem; }
+/* brewing: one step card, counting down to the next */
+.brewing { min-height: calc(100vh - 80px); gap: 18px; cursor: pointer; user-select: none; }
+.brew-top { display: flex; justify-content: space-between; align-items: baseline; color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
+.brew-top .batch { color: var(--accent); font-weight: 650; }
+#clock { font-weight: 600; }
+.brew-name { margin: -10px 0 0; }
+.step-card { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 6px; min-height: 42vh; }
+.step-card.slide { animation: slide .45s cubic-bezier(.2,.8,.2,1); }
+@keyframes slide { from { opacity: 0; transform: translateY(24px); } }
+.step-lead { margin: 0; font-size: 1.5rem; font-weight: 600; color: var(--muted); }
+.step-amount { margin: 0; font-size: clamp(4.5rem, 24vw, 7.5rem); font-weight: 750; line-height: 1; letter-spacing: -.03em; color: var(--accent); font-variant-numeric: tabular-nums; }
+.step-rest { margin: 4px 0 0; font-size: 1.35rem; font-weight: 600; line-height: 1.35; }
+.step-amount[hidden] + .step-rest { font-size: 2rem; line-height: 1.25; }
+.countdown { display: flex; flex-direction: column; gap: 8px; }
+.countbar { height: 8px; border-radius: 8px; background: var(--raised); overflow: hidden; }
+.countbar i { display: block; height: 100%; width: 0; border-radius: 8px; background: var(--accent); transition: width .25s linear; }
+#left { margin: 0; color: var(--muted); font-variant-numeric: tabular-nums; }
+.then { margin: 0; color: var(--muted); font-size: 1rem; }
+.hint { margin: 0; text-align: center; color: var(--muted); font-size: .8rem; opacity: .7; }
 .btn.tall { padding: 16px 22px; font-size: 1.1rem; }
 .need { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .need li { padding: 14px 16px; border-radius: 14px; background: var(--card); font-size: 1.05rem; }
@@ -326,8 +327,7 @@ details.more[open] > summary { margin-bottom: 12px; }
 
 @media (max-width: 380px) {
   .row { grid-template-columns: 1fr; }
-    #clock { font-size: 2.7rem; }
-}
+  }
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after { animation: none !important; transition: none !important; }
 }

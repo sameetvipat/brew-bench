@@ -1,24 +1,24 @@
 /*
- * Brew timer: counts up, beeps at each step, and draws the dial.
+ * Brewing stage: one step card at a time, with the amount huge, counting down to the next step.
+ * A soft chime and a buzz mark each new step; the screen stays awake; tap anywhere to pause.
  * The start time is saved (state.run), so a long brew keeps going after the page closes.
  */
-import { $, esc, formatTime, formatTemp } from "./util.js";
+import { $, formatTime } from "./util.js";
 import { state, session, save } from "./state.js";
 import { setStage } from "./brew.js";
 
 const TICK_MS = 250;
 const LONG_BREW = 3600; // seconds; longer brews never hold the screen on
+const ASK_ALERTS_FROM = 300; // seconds; ask for notifications only on brews you'd walk away from
 
 let startedAt = 0; // Date.now() at 0:00
 let elapsed = 0; // seconds since 0:00
 let interval = null; // set while running
-let lastStep = -1; // step index we last beeped for
-let finished = false;
+let lastStep = -1; // step index we last chimed for
+let between = false; // a batch just ended and the next one hasn't started
 let batch = 1; // which batch is brewing, when a recipe needs more than one brew
 let wakeLock = null;
 let audio = null;
-
-const ASK_ALERTS_FROM = 300; // seconds; ask for notifications only on brews you'd walk away from
 
 // shortcut: locked-phone alerts work where the browser keeps timers running (Android, desktop);
 // iOS pauses the page, so they need a push server to be reliable there
@@ -29,9 +29,9 @@ const isLongBrew = () => totalTime() >= LONG_BREW;
 const isRunning = () => interval !== null;
 const batchTotal = () => session.current.batches?.count || 1;
 
-/** Index of the step in progress at this second, or -1 before the first. */
+/** Index of the step in progress at this second (0 from the start). */
 function stepAt(seconds) {
-  let index = -1;
+  let index = 0;
   timeline().forEach((step, i) => {
     if (seconds >= step.at) index = i;
   });
@@ -40,106 +40,94 @@ function stepAt(seconds) {
 
 /* ---------- drawing ---------- */
 
+/** "Pour to 200 g. Plunger in 1 cm." -> lead "Pour to", amount "200 g", rest "Plunger in 1 cm." */
+function splitStep(text) {
+  const m = text.match(/^(.*?)(\d+(?:\.\d+)?\s?g)\b\.?\s*(.*)$/);
+  if (!m) return { lead: "", amount: "", rest: text };
+  return { lead: m[1].trim(), amount: m[2], rest: m[3] };
+}
+
 export function drawTimer() {
-  const steps = timeline();
   if (batch > batchTotal()) batch = 1; // cups changed to fewer batches
-  const started = isRunning() || elapsed > 0;
-  $("batch").textContent = batchTotal() > 1 ? `Batch ${batch} of ${batchTotal()}` : "";
-  const current = started ? stepAt(Math.floor(elapsed)) : -1;
+  const steps = timeline();
+  const current = stepAt(Math.floor(elapsed));
   const next = steps[current + 1];
+  const paused = !isRunning();
 
+  $("batch").textContent = batchTotal() > 1 ? `Batch ${batch} of ${batchTotal()}` : "";
+  $("stepNo").textContent = between ? "" : `Step ${current + 1} of ${steps.length}`;
   $("clock").textContent = formatTime(elapsed);
-  $("clock").classList.toggle("long", isLongBrew());
-  showNow(current < 0 ? prepLine() : steps[current].text);
-  let upcoming = next ? `Next at ${formatTime(next.at)}: ${next.text}` : "";
-  if (!started) upcoming = `First: ${steps[0].text}`;
-  $("next").textContent = upcoming;
-  $("steps").innerHTML = steps
-    .map((step, i) => {
-      const status = i === current ? "on" : i < current ? "done" : "";
-      return `<li class="${status}"><b>${formatTime(step.at)}</b>${esc(step.text)}</li>`;
-    })
-    .join("");
-  drawDial();
 
-  let left = `${formatTime(totalTime())} total`;
-  if (finished) left = "done";
-  else if (started) left = next ? `next in ${formatTime(next.at - elapsed)}` : "";
-  $("left").textContent = left;
+  if (between) {
+    showCard({ lead: `Batch ${batch - 1} done`, amount: "", rest: "Empty and rinse, then start the next one." });
+    $("next").textContent = `First: ${steps[0].text}`;
+  } else {
+    showCard(splitStep(steps[current].text));
+    $("next").textContent = next ? `Then: ${next.text}` : "Last step";
+  }
+
+  // countdown to the next step (or to the end on the last step)
+  const from = steps[current].at;
+  const to = next ? next.at : totalTime();
+  const share = to > from ? Math.min(1, (elapsed - from) / (to - from)) : 1;
+  $("bar").style.width = between ? "0%" : `${share * 100}%`;
+  $("left").textContent = between ? "" : next ? `next in ${formatTime(to - elapsed)}` : "";
+
+  $("pausedBtns").hidden = !paused;
+  $("hint").hidden = paused;
+  $("go").textContent = between ? `Start batch ${batch}` : "Resume";
 }
 
-/** What to do before pressing Start (amounts for one batch when brewing in batches). */
-function prepLine() {
-  const r = session.current;
-  const dose = r.batches?.dose ?? r.dose;
-  const ice = r.batches?.ice ?? r.ice;
-  let line = `Weigh ${dose} g, ${r.grind.toLowerCase()}. Water ${formatTemp(r.temp)}.`;
-  if (ice) line += ` Ice ${ice} g in the ${r.kind === "esp" || r.kind === "filter" ? "glass" : "server"}.`;
-  if (batch > 1) line = `Batch ${batch - 1} done. Empty and rinse, then start batch ${batch}. ${line}`;
-  return line;
+/** The step card. A live region, so only rewrite it when the step changes; it slides in fresh. */
+function showCard({ lead, amount, rest }) {
+  const key = `${lead}|${amount}|${rest}`;
+  const card = $("stepCard");
+  if (card.dataset.key === key) return;
+  card.dataset.key = key;
+  $("stepLead").textContent = lead;
+  $("stepAmount").textContent = amount;
+  $("stepAmount").hidden = !amount;
+  $("stepRest").textContent = rest;
+  card.classList.remove("slide");
+  void card.offsetWidth; // reflow, so re-adding the class replays the slide
+  card.classList.add("slide");
 }
 
-/** The big current-step line. It is a live region, so only write it when it changes. */
-function showNow(text) {
-  const el = $("now");
-  if (el.textContent === text) return;
-  el.textContent = text;
-  el.classList.remove("pop");
-  void el.offsetWidth; // reflow, so re-adding the class replays the fade
-  el.classList.add("pop");
-}
+/* ---------- sound, buzz, screen ---------- */
 
-/** The ring fills over the whole brew; one dot per step, filled once reached. */
-function drawDial() {
-  const total = totalTime();
-  const percent = Math.min(100, (elapsed / total) * 100);
-  $("arc").style.strokeDashoffset = 100 - percent;
-  $("arc").style.opacity = percent ? 1 : 0;
-  $("dial").setAttribute("aria-valuenow", Math.round(percent));
-
-  $("ticks").innerHTML = timeline()
-    .slice(1)
-    .map((step) => {
-      const angle = (step.at / total) * 2 * Math.PI;
-      const x = (100 + 90 * Math.cos(angle)).toFixed(1);
-      const y = (100 + 90 * Math.sin(angle)).toFixed(1);
-      return `<circle class="tick${elapsed >= step.at ? " on" : ""}" r="5" cx="${x}" cy="${y}"/>`;
-    })
-    .join("");
-}
-
-/* ---------- sound and screen ---------- */
-
-function beep(count) {
+/** A soft chime: two rising notes for a new step, three for the last. */
+function chime(last = false) {
   try {
     audio ??= new (window.AudioContext || window.webkitAudioContext)();
-    for (let i = 0; i < count; i++) {
+    const notes = last ? [523.25, 659.25, 783.99] : [587.33, 783.99]; // C5 E5 G5 / D5 G5
+    notes.forEach((freq, i) => {
+      const t = audio.currentTime + i * 0.16;
       const osc = audio.createOscillator();
       const gain = audio.createGain();
-      const t = audio.currentTime + i * 0.22;
-      osc.frequency.value = 880;
+      osc.type = "sine";
+      osc.frequency.value = freq;
       osc.connect(gain);
       gain.connect(audio.destination);
       gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+      gain.gain.exponentialRampToValueAtTime(0.18, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.9); // long, soft tail
       osc.start(t);
-      osc.stop(t + 0.18);
-    }
+      osc.stop(t + 1);
+    });
   } catch {
     // no audio: the screen still shows each step
   }
 }
 
-/** A new step started: buzz the phone, and show a notification when the page is hidden. */
+/** A new step started: buzz, and show a notification when the page is hidden. */
 function alertStep(text) {
-  navigator.vibrate?.([200, 100, 200]);
+  navigator.vibrate?.([120, 80, 120]);
   if (!document.hidden || !("Notification" in window) || Notification.permission !== "granted") return;
   const options = { body: text, tag: "brew-step", renotify: true };
   navigator.serviceWorker
     ?.getRegistration()
     .then((reg) => (reg ? reg.showNotification("Brew Bench", options) : new Notification("Brew Bench", options)))
-    .catch(() => {}); // no notification; the beep and dial still work
+    .catch(() => {}); // no notification; the chime and the card still work
 }
 
 function askForAlerts() {
@@ -165,14 +153,14 @@ function releaseScreen() {
   wakeLock = null;
 }
 
-/* ---------- start, pause, reset ---------- */
+/* ---------- start, pause, stop ---------- */
 
 function tick() {
   elapsed = (Date.now() - startedAt) / 1000;
   const current = stepAt(Math.floor(elapsed));
   if (current !== lastStep) {
     if (lastStep > -1) {
-      beep(current === timeline().length - 1 ? 3 : 2); // 3 beeps on the last step
+      chime(current === timeline().length - 1);
       alertStep(timeline()[current].text);
     }
     lastStep = current;
@@ -182,17 +170,18 @@ function tick() {
 }
 
 function start({ resume = false } = {}) {
+  between = false;
   startedAt = Date.now() - elapsed * 1000;
   if (lastStep === -1) {
     lastStep = stepAt(Math.floor(elapsed));
-    if (!resume) beep(1);
+    if (!resume) chime();
   }
-  if (!resume) askForAlerts(); // needs a tap, so only from the Start button
+  if (!resume) askForAlerts(); // needs a tap, so only from Start
   state.run = { recipeId: session.current.id, startedAt, batch };
   save();
   interval = setInterval(tick, TICK_MS);
-  $("go").textContent = "Pause";
   if (!isLongBrew()) holdScreenOn(); // never hold the screen on for a 12 h steep
+  drawTimer();
 }
 
 function stopTicking() {
@@ -205,37 +194,37 @@ function pause() {
   stopTicking();
   state.run = null;
   save();
-  $("go").textContent = "Resume";
+  drawTimer();
 }
 
-/** A batch ended but more are left: get ready for the next one. */
+/** A batch ended but more are left: wait for "Start batch 2". */
 function nextBatch() {
   stopTicking();
   batch++;
   elapsed = 0;
   lastStep = -1;
+  between = true;
   state.run = null; // nothing is brewing between batches
   save();
-  $("go").textContent = `Start batch ${batch}`;
 }
 
 function finish() {
   if (batch < batchTotal()) return nextBatch();
-  pause();
-  finished = true;
+  stopTicking();
+  state.run = null;
+  save();
   setStage("done");
 }
 
-/** Stop and go back to "get ready": Stop button, Skip after a brew, Brew again. */
+/** Stop and go back to "get ready": Stop, Skip after a brew, Brew again. */
 export function reset() {
   stopTicking();
   batch = 1;
   elapsed = 0;
   lastStep = -1;
-  finished = false;
+  between = false;
   state.run = null;
   save();
-  $("go").textContent = "Start";
   drawTimer();
   setStage("ready");
 }
@@ -254,12 +243,11 @@ export function leaveTimer() {
   batch = 1;
   elapsed = 0;
   lastStep = -1;
-  finished = false;
+  between = false;
 }
 
 /** Opening a recipe: pick its brew back up if one is running. Call after drawBrew(). */
 export function enterTimer(recipeId) {
-  $("go").textContent = "Start";
   if (state.run?.recipeId !== recipeId) return;
   batch = state.run.batch || 1;
   elapsed = (Date.now() - state.run.startedAt) / 1000;
@@ -268,11 +256,11 @@ export function enterTimer(recipeId) {
 }
 
 export function initTimer() {
-  $("go").onclick = () => {
-    if (finished) reset();
-    else if (isRunning()) pause();
-    else start();
-  };
+  // tap anywhere on the brewing screen to pause; the buttons handle resume and stop
+  $("brewing").addEventListener("click", (e) => {
+    if (isRunning() && !e.target.closest("button, a")) pause();
+  });
+  $("go").onclick = () => start();
   $("reset").onclick = reset;
 
   // The browser drops the wake lock when the page is hidden; take it again on return.

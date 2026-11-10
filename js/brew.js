@@ -7,7 +7,7 @@
  */
 import { BREWERS, LIMITS, clamp, buildRecipe, batchCount } from "./recipes.js";
 import { state, session, save, tweakKey, findRecipe, CUP_CHOICES } from "./state.js";
-import { $, esc, formatTemp } from "./util.js";
+import { $, esc, formatTemp, formatTime } from "./util.js";
 import { drawTimer, startBrew, reset as stopBrew } from "./timer.js";
 import { drawBeanPicker } from "./shelf.js";
 
@@ -96,6 +96,7 @@ export function drawBrew() {
     (n) => `<button type="button" data-cups="${n}" aria-pressed="${state.cups === n}" aria-label="${n} cup${n > 1 ? "s" : ""}">${n}</button>`,
   ).join("");
   $("stepsN").textContent = r.timeline.length;
+  $("steps").innerHTML = r.timeline.map((step) => `<li><b>${formatTime(step.at)}</b>${esc(step.text)}</li>`).join("");
 
   drawBeanPicker();
   drawTimer();

@@ -83,25 +83,30 @@
       <button type="button" class="text-btn" id="logNow">Log a brew without the timer</button>
     </div>
 
-    <!-- 2. Brewing: only the timer and the step in hand -->
-    <div class="stage timer" data-for="brewing">
-      <p class="muted small" id="tName"></p>
-      <div class="batch" id="batch" aria-live="polite"></div>
-      <div class="dial" id="dial" role="progressbar" aria-label="Brew progress" aria-valuemin="0" aria-valuemax="100">
-        <svg viewBox="0 0 200 200" aria-hidden="true">
-          <circle class="track" cx="100" cy="100" r="90"/>
-          <circle id="arc" cx="100" cy="100" r="90" pathLength="100"/>
-          <g id="ticks"></g>
-        </svg>
-        <div class="dial-c">
-          <div id="clock">0:00</div>
-          <div class="muted" id="left"></div>
-        </div>
+    <!-- 2. Brewing: one step card at a time, counting down to the next. Tap anywhere to pause. -->
+    <div class="stage brewing" data-for="brewing" id="brewing">
+      <div class="brew-top">
+        <span id="stepNo"></span>
+        <span class="batch" id="batch"></span>
+        <span id="clock">0:00</span>
       </div>
-      <div id="now" aria-live="polite"></div>
-      <div class="muted small" id="next"></div>
-      <div class="btns center">
-        <button class="btn primary" id="go">Pause</button>
+      <p class="muted small brew-name" id="tName"></p>
+
+      <div class="step-card" id="stepCard" aria-live="polite">
+        <p class="step-lead" id="stepLead"></p>
+        <p class="step-amount" id="stepAmount"></p>
+        <p class="step-rest" id="stepRest"></p>
+      </div>
+
+      <div class="countdown">
+        <div class="countbar" role="presentation"><i id="bar"></i></div>
+        <p id="left"></p>
+      </div>
+      <p class="then" id="next"></p>
+
+      <p class="hint" id="hint">Tap anywhere to pause</p>
+      <div class="btns center" id="pausedBtns" hidden>
+        <button class="btn primary" id="go">Resume</button>
         <button class="btn ghost" id="reset">Stop</button>
       </div>
     </div>
