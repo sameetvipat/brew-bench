@@ -1,12 +1,12 @@
 /*
  * Service worker:
  * 1. Offline: keeps a copy of the app (code, styles, recipes) so it opens with no connection.
- *    Each request is answered from the copy straight away, and the copy is refreshed from the
- *    network in the background, so a new version shows up on the next open.
+ *    Online, every request goes to the network first and refreshes the copy, so you always get
+ *    the latest version, with no mix of old and new files. Offline, the copy answers.
  * 2. Step notifications while the screen is locked, and bringing the app back when one is tapped.
  * Your brews and beans are not here: they live in the page's own storage.
  */
-const CACHE = "brew-bench-v1"; // bump to drop old copies after changing the file list
+const CACHE = "brew-bench-v2"; // bump to drop old copies (v2: network first, replaces v1's cache first)
 
 const APP_FILES = [
   "./",
@@ -55,7 +55,7 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Answer from the copy, refresh it in the background; fall back to the network for anything new.
+// Network first (keeping the copy fresh); the copy only when the network fails.
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET" || new URL(request.url).origin !== self.location.origin) return;
@@ -63,18 +63,15 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     (async () => {
       const cache = await caches.open(CACHE);
-      const cached = await cache.match(request, { ignoreSearch: true });
-      const fresh = fetch(request)
-        .then((response) => {
-          if (response.ok) cache.put(request, response.clone());
-          return response;
-        })
-        .catch(() => cached); // offline: keep using the copy
-      if (cached) {
-        event.waitUntil(fresh); // let the refresh finish after we answer
-        return cached;
+      try {
+        const response = await fetch(request, { cache: "no-cache" }); // revalidate, never a stale HTTP cache
+        if (response.ok) cache.put(request, response.clone());
+        return response;
+      } catch {
+        const cached = await cache.match(request, { ignoreSearch: true });
+        if (cached) return cached;
+        throw new Error(`offline and not saved: ${request.url}`);
       }
-      return fresh;
     })(),
   );
 });
