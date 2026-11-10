@@ -168,6 +168,21 @@
   </nav>
 </div>
 
+<script>
+  // Show any error on screen, so a problem on the phone can be read out and fixed.
+  function showError(message) {
+    let box = document.getElementById("errorBox");
+    if (!box) {
+      box = document.createElement("pre");
+      box.id = "errorBox";
+      box.style.cssText = "position:fixed;left:8px;right:8px;bottom:80px;z-index:9;margin:0;padding:12px;border-radius:12px;background:#5a1d14;color:#fff;font:12px/1.4 ui-monospace,monospace;white-space:pre-wrap;max-height:40vh;overflow:auto";
+      document.body.append(box);
+    }
+    box.textContent += (box.textContent ? "\n" : "Something broke. Please send this to Claude:\n") + message + "\nscreen: " + location.hash;
+  }
+  addEventListener("error", (e) => showError(`${e.message} (${(e.filename || "").split("/").pop()}:${e.lineno})`));
+  addEventListener("unhandledrejection", (e) => showError(String(e.reason?.stack || e.reason)));
+</script>
 <script type="module" src="js/main.js"></script>
 <script>
   // Browsers block modules on file://, so say how to open it.
