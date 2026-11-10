@@ -62,7 +62,7 @@
         <h1 id="rName"></h1>
         <p class="muted small" id="rSrc"></p>
       </div>
-      <ul class="need" id="need"></ul>
+      <ul class="need" id="need" aria-label="Gather these. Tap each one when it's ready."></ul>
       <p class="batch-note" id="batchNote" hidden></p>
       <div class="setup-row">
         <div class="seg" id="cups" role="group" aria-label="Cups"></div>
@@ -117,7 +117,11 @@
         <h1>How was it?</h1>
         <p class="muted small" id="dName"></p>
       </div>
-      <div class="chips" id="tastes"></div>
+      <div class="moods" id="moods"></div>
+      <div id="offWhy" hidden>
+        <p class="muted small">What was off?</p>
+        <div class="chips" id="tastes"></div>
+      </div>
       <div id="sugg"></div>
       <textarea class="text" id="note" placeholder="Note (optional)"></textarea>
       <div class="btns" id="saveRow">

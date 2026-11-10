@@ -11,7 +11,10 @@ import { $, esc, formatTemp, formatTime } from "./util.js";
 import { drawTimer, startBrew, reset as stopBrew } from "./timer.js";
 import { drawBeanPicker } from "./shelf.js";
 
-export const TASTES = { sour: "Sour", bitter: "Bitter", weak: "Weak", strong: "Too strong", good: "Good" };
+/** How a brew went. "good" is from older logs. */
+export const TASTES = { loved: "Loved it", fine: "Fine", sour: "Sour", bitter: "Bitter", weak: "Weak", strong: "Too strong", good: "Good" };
+const MOODS = { loved: "Loved it", fine: "Fine", off: "Something's off" };
+const OFF = ["sour", "bitter", "weak", "strong"];
 
 /**
  * A recipe with your saved tweak (or the log entry being re-brewed) applied, for the given cups.
@@ -38,6 +41,7 @@ export function openBrew(id) {
   state.recipeId = id;
   save();
   session.taste = null;
+  session.checked = new Set(); // ticked items on the get-ready list
   $("note").value = "";
   $("saveRow").hidden = false;
   $("afterSave").hidden = true;
@@ -87,7 +91,12 @@ export function drawBrew() {
   for (const id of ["rName", "tName", "dName"]) $(id).textContent = r.name;
   $("rSrc").textContent = r.src;
 
-  $("need").innerHTML = needList(r).map((item) => `<li>${item}</li>`).join("");
+  $("need").innerHTML = needList(r)
+    .map((item, i) => {
+      const done = session.checked?.has(i);
+      return `<li><button type="button" data-need="${i}" aria-pressed="${!!done}"><span class="tick" aria-hidden="true"></span><span>${item}</span></button></li>`;
+    })
+    .join("");
   $("batchNote").hidden = !r.batches;
   $("batchNote").textContent = r.batches ? batchNote(r) : "";
   $("yours").hidden = !r.tweaked;
@@ -130,10 +139,8 @@ function batchNote(r) {
 const GRIND_FINER = ["Grind one step finer next time.", null];
 const GRIND_COARSER = ["Grind one step coarser next time.", null];
 
-/** Returns [advice, change or null]. Changes are totals: per-cup amounts times cups. */
+/** For sour, bitter, weak or strong: returns [advice, change or null]. Changes are totals: per-cup amounts times cups. */
 export function suggestChange(taste, r) {
-  if (taste === "good") return ["Keep this recipe.", null];
-
   const cups = r.cups;
   const moreCoffee = ["Add 1 g coffee per cup, same water.", { dose: r.dose + cups }];
   const moreWater = ["Add 15 g water per cup.", { water: r.water + 15 * cups }];
@@ -168,18 +175,29 @@ export function suggestChange(taste, r) {
   return byKind[r.kind][taste];
 }
 
+/** Loved it / Fine / Something's off. Only "off" asks what was off, then gives one suggestion. */
 function drawTaste() {
-  $("note").hidden = !session.taste; // the note box appears once you pick a taste
-  $("tastes").innerHTML = Object.entries(TASTES)
-    .map(([key, label]) => `<button type="button" class="chip" data-taste="${key}" aria-pressed="${session.taste === key}">${label}</button>`)
-    .join("");
+  const taste = session.taste;
+  const mood = !taste ? null : OFF.includes(taste) || taste === "off" ? "off" : taste;
 
-  const suggestion = session.taste && suggestChange(session.taste, session.current);
-  if (!suggestion) {
-    $("sugg").innerHTML = "";
+  $("moods").innerHTML = Object.entries(MOODS)
+    .map(([key, label]) => `<button type="button" class="mood" data-mood="${key}" aria-pressed="${mood === key}">${label}</button>`)
+    .join("");
+  $("offWhy").hidden = mood !== "off";
+  $("tastes").innerHTML = OFF.map(
+    (key) => `<button type="button" class="chip" data-taste="${key}" aria-pressed="${taste === key}">${TASTES[key]}</button>`,
+  ).join("");
+  $("note").hidden = !mood; // the note box appears once you choose
+
+  if (mood === "loved") {
+    $("sugg").textContent = "Lovely. Same again next time.";
     return;
   }
-  const [advice, change] = suggestion;
+  if (!OFF.includes(taste)) {
+    $("sugg").textContent = "";
+    return;
+  }
+  const [advice, change] = suggestChange(taste, session.current);
   const useButton = change ? '<button type="button" class="link" id="apply">Use it next time</button>' : "";
   $("sugg").innerHTML = `${advice} ${useButton}`;
 }
@@ -211,11 +229,28 @@ export function initBrew() {
     stopBrew();
   };
 
+  $("moods").onclick = (e) => {
+    const mood = e.target.closest("[data-mood]")?.dataset.mood;
+    if (!mood) return;
+    session.taste = mood; // "off" until you say what was off
+    drawTaste();
+  };
   $("tastes").onclick = (e) => {
     const taste = e.target.dataset.taste;
     if (!taste) return;
-    session.taste = session.taste === taste ? null : taste;
+    session.taste = session.taste === taste ? "off" : taste;
     drawTaste();
+  };
+
+  // tick things off the get-ready list as you gather them
+  $("need").onclick = (e) => {
+    const button = e.target.closest("[data-need]");
+    if (!button) return;
+    const i = Number(button.dataset.need);
+    if (session.checked.has(i)) session.checked.delete(i);
+    else session.checked.add(i);
+    navigator.vibrate?.(12);
+    button.setAttribute("aria-pressed", session.checked.has(i));
   };
 
   $("sugg").onclick = (e) => {

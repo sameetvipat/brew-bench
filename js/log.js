@@ -84,7 +84,7 @@ async function logBrew() {
     grind: r.grind,
     shift: r.shift,
     bean: state.bean,
-    taste: session.taste,
+    taste: session.taste === "off" ? null : session.taste, // "off" without a reason isn't worth keeping
     note: $("note").value.slice(0, MAX_NOTE),
   };
 
@@ -98,17 +98,24 @@ async function logBrew() {
       entries = list;
       drawLog();
     }
+    const count = entries.filter((e) => e.rid === r.id).length + (cloud ? 1 : 0); // local list already has it
     const bag = useCoffee(r.dose);
     clearTaste();
     $("note").value = "";
     $("saveRow").hidden = true;
     $("afterSave").hidden = false;
-    $("saveMsg").textContent = bag ? `Saved. ${Math.round(bag.left)} g left in the bag.` : "Saved to your log.";
+    $("saveMsg").textContent = `Your ${ordinalNumber(count)} ${r.name}.${bag ? ` ${Math.round(bag.left)} g left in the bag.` : ""}`;
   } catch (err) {
     $("saveMsg").textContent = err?.code === "quota_exceeded" ? "Log full. Delete old entries." : "Couldn't save. Try again.";
   } finally {
     $("save").disabled = false;
   }
+}
+
+/** 1st, 2nd, 3rd, 4th, 11th, 12th, 13th, 21st... */
+function ordinalNumber(n) {
+  const suffix = n % 100 >= 11 && n % 100 <= 13 ? "th" : { 1: "st", 2: "nd", 3: "rd" }[n % 10] || "th";
+  return `${n}${suffix}`;
 }
 
 /* ---------- setup ---------- */
