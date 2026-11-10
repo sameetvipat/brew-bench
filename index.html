@@ -1,0 +1,171 @@
+<meta charset="utf-8">
+<title>Brew Bench</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#100d0b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="style.css">
+
+<!--
+  Screens, one shown at a time (js/router.js):
+    #setup          setup: your name and brewers
+    (home)          Brew tab: greeting and your brewers
+    #brewer/aero    that brewer's recipe cards
+    #v60-tetsu      brew one recipe, in three stages: get ready, brewing, done
+    #beans          Beans tab: bean register
+    #journal        Journal tab: your brews, newest first
+  Empty containers are filled by the module named next to them.
+-->
+<div class="app">
+
+  <!-- ===== Setup (js/setup.js): one step at a time, drawn into #obBody ===== -->
+  <section id="setup" class="screen" hidden>
+    <header class="bar">
+      <button type="button" class="bar-btn" id="obBack">‹ Back</button>
+    </header>
+    <div class="onboard" id="obBody"></div>
+    <button class="btn primary wide" id="obNext">Next</button>
+  </section>
+
+  <!-- ===== Brew tab: home (js/home.js) ===== -->
+  <section id="home" class="screen" hidden>
+    <header class="bar"><span></span></header>
+    <h1 class="greet" id="greet"></h1>
+    <p class="lead">What are you brewing with today?</p>
+    <a class="banner" id="running" hidden></a>
+    <div class="grid2" id="brewerGrid"></div>
+    <a href="#setup" class="text-btn">Change your name or brewers</a>
+  </section>
+
+  <!-- ===== One brewer's recipes (js/recipelist.js) ===== -->
+  <section id="recipes" class="screen" hidden>
+    <header class="bar"><a href="#" class="back">‹ Brew</a></header>
+    <div class="hero">
+      <span id="bArt"></span>
+      <div><h1 id="bName"></h1><p class="muted" id="bCount"></p></div>
+    </div>
+    <div class="cards" id="recipeCards"></div>
+  </section>
+
+  <!-- ===== Brew a recipe (js/brew.js, js/timer.js, js/log.js) =====
+       data-stage shows one stage at a time: ready, brewing, done -->
+  <section id="brew" class="screen" data-stage="ready" hidden>
+    <header class="bar"><a href="#" class="back" id="brewBack">‹ Recipes</a></header>
+
+    <!-- 1. Get ready: what you need, cups, bean, Start -->
+    <div class="stage" data-for="ready">
+      <div>
+        <h1 id="rName"></h1>
+        <p class="muted small" id="rSrc"></p>
+      </div>
+      <ul class="need" id="need"></ul>
+      <p class="batch-note" id="batchNote" hidden></p>
+      <div class="setup-row">
+        <div class="seg" id="cups" role="group" aria-label="Cups"></div>
+        <label class="bean-pick">
+          <span class="sr">Bean</span>
+          <select id="bean"></select>
+        </label>
+      </div>
+      <p class="muted small" id="beanInfo"></p>
+      <p class="muted small" id="yours" hidden>Your version, from your last tweak. <button type="button" class="text-btn inline" id="resetR">Use the original</button></p>
+      <button class="btn primary wide tall" id="startBrew">Start brewing</button>
+
+      <details class="card-box" id="stepsBox">
+        <summary>Steps <span class="muted" id="stepsN"></span></summary>
+        <ol class="steps" id="steps"></ol>
+      </details>
+
+      <button type="button" class="text-btn" id="logNow">Log a brew without the timer</button>
+    </div>
+
+    <!-- 2. Brewing: only the timer and the step in hand -->
+    <div class="stage timer" data-for="brewing">
+      <p class="muted small" id="tName"></p>
+      <div class="batch" id="batch" aria-live="polite"></div>
+      <div class="dial" id="dial" role="progressbar" aria-label="Brew progress" aria-valuemin="0" aria-valuemax="100">
+        <svg viewBox="0 0 200 200" aria-hidden="true">
+          <circle class="track" cx="100" cy="100" r="90"/>
+          <circle id="arc" cx="100" cy="100" r="90" pathLength="100"/>
+          <g id="ticks"></g>
+        </svg>
+        <div class="dial-c">
+          <div id="clock">0:00</div>
+          <div class="muted" id="left"></div>
+        </div>
+      </div>
+      <div id="now" aria-live="polite"></div>
+      <div class="muted small" id="next"></div>
+      <div class="btns center">
+        <button class="btn primary" id="go">Pause</button>
+        <button class="btn ghost" id="reset">Stop</button>
+      </div>
+    </div>
+
+    <!-- 3. Done: how was it, save -->
+    <div class="stage" data-for="done" id="taste">
+      <div>
+        <h1>How was it?</h1>
+        <p class="muted small" id="dName"></p>
+      </div>
+      <div class="chips" id="tastes"></div>
+      <div id="sugg"></div>
+      <textarea class="text" id="note" placeholder="Note (optional)"></textarea>
+      <div class="btns" id="saveRow">
+        <button class="btn primary" id="save">Save to log</button>
+        <button class="btn ghost" id="skipLog">Skip</button>
+      </div>
+      <p class="muted small" id="saveMsg" aria-live="polite"></p>
+      <div class="btns" id="afterSave" hidden>
+        <a class="btn primary" id="doneBack" href="#">Back to recipes</a>
+        <button class="btn ghost" id="brewAgain">Brew again</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Beans tab (js/shelf.js) ===== -->
+  <section id="beans" class="screen" hidden>
+    <header class="bar"><span></span></header>
+    <h1>Beans</h1>
+    <ul class="rows" id="shelf"></ul>
+    <form id="addBean" class="card-box">
+      <h2>Add a bag</h2>
+      <label class="f"><span class="label">Coffee name</span><input class="text" id="nbName" required maxlength="120"></label>
+      <div class="row">
+        <label class="f"><span class="label">Roasted on</span><input class="text" id="nbRoast" type="date"></label>
+        <label class="f"><span class="label">Bag size (g)</span><input class="text" id="nbG" type="number" inputmode="numeric" min="1" max="5000" value="250" required></label>
+      </div>
+      <button class="btn primary">Add bag</button>
+    </form>
+  </section>
+
+  <!-- ===== Journal tab (js/journal.js) ===== -->
+  <section id="journal" class="screen" hidden>
+    <header class="bar"><span></span></header>
+    <h1>Journal</h1>
+    <div id="journalList"></div>
+    <p class="muted small" id="logStatus"></p>
+  </section>
+
+  <!-- ===== Bottom tabs (js/router.js shows them on home, recipes, beans, journal) ===== -->
+  <nav class="tabs" id="tabs" aria-label="Sections" hidden>
+    <a href="#" data-tab="home"><span id="tabBrew"></span>Brew</a>
+    <a href="#beans" data-tab="beans"><span id="tabBeans"></span>Beans</a>
+    <a href="#journal" data-tab="journal"><span id="tabLog"></span>Journal</a>
+  </nav>
+</div>
+
+<script type="module" src="js/main.js"></script>
+<script>
+  // Browsers block modules on file://, so say how to open it.
+  if (location.protocol === "file:") {
+    document.querySelector(".app").insertAdjacentHTML(
+      "afterbegin",
+      '<p class="card-box">Open Brew Bench through a local server: run <b>python3 -m http.server</b> in this folder, then visit <b>http://localhost:8000</b>.</p>'
+    );
+  }
+</script>
