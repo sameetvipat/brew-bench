@@ -64,7 +64,7 @@ export function drawTimer() {
   const from = steps[current].at;
   const to = next ? next.at : totalTime();
   const share = to > from ? Math.min(1, (elapsed - from) / (to - from)) : 1;
-  $("bar").style.width = between ? "0%" : `${share * 100}%`;
+  $("bar").style.height = between ? "0%" : `${share * 100}%`; // the screen fills like a cup until the next step
   $("left").textContent = between ? "" : next ? `next in ${formatTime(to - elapsed)}` : "";
 
   $("pausedBtns").hidden = !paused;

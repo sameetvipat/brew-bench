@@ -2,7 +2,8 @@
 <title>Brew Bench</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#100d0b">
+<meta name="theme-color" content="#f5eee3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1e1713" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -33,8 +34,17 @@
   <!-- ===== Brew tab: home, greeting and recipe cards (js/home.js) ===== -->
   <section id="home" class="screen" hidden>
     <header class="bar"><span></span></header>
+    <div>
+      <svg class="art cup" viewBox="0 0 48 48" aria-hidden="true">
+        <path class="steam" d="M18 16c0-3 3-3 3-6s-3-3-3-5"/>
+        <path class="steam" d="M25 16c0-3 3-3 3-6s-3-3-3-5"/>
+        <path d="M10 22h24v8a10 10 0 0 1-10 10h-4a10 10 0 0 1-10-10z"/>
+        <path d="M34 25h3a4 4 0 0 1 0 8h-3"/>
+        <path d="M8 44h30"/>
+      </svg>
+    </div>
     <h1 class="greet" id="greet"></h1>
-    <p class="lead">What are you brewing today?</p>
+    <p class="lead">What shall we brew?</p>
     <a class="banner" id="running" hidden></a>
     <div class="cards" id="recipeCards"></div>
     <a href="#setup" class="text-btn">Change your name</a>
@@ -62,7 +72,7 @@
       </div>
       <p class="muted small" id="beanInfo"></p>
       <p class="muted small" id="yours" hidden>Your version, from your last tweak. <button type="button" class="text-btn inline" id="resetR">Use the original</button></p>
-      <button class="btn primary wide tall" id="startBrew">Start brewing</button>
+      <button class="btn primary wide tall" id="startBrew">Begin</button>
 
       <details class="card-box" id="stepsBox">
         <summary>Steps <span class="muted" id="stepsN"></span></summary>
@@ -90,8 +100,9 @@
       <button type="button" class="text-btn" id="logNow">Log a brew without the timer</button>
     </div>
 
-    <!-- 2. Brewing: one step card at a time, counting down to the next. Tap anywhere to pause. -->
+    <!-- 2. Brewing: one step at a time; the screen fills like a cup until the next step. Tap anywhere to pause. -->
     <div class="stage brewing" data-for="brewing" id="brewing">
+      <div class="fill" id="bar" aria-hidden="true"></div>
       <div class="brew-top">
         <span id="stepNo"></span>
         <span class="batch" id="batch"></span>
@@ -105,10 +116,7 @@
         <p class="step-rest" id="stepRest"></p>
       </div>
 
-      <div class="countdown">
-        <div class="countbar" role="presentation"><i id="bar"></i></div>
-        <p id="left"></p>
-      </div>
+      <p id="left"></p>
       <p class="then" id="next"></p>
 
       <p class="hint" id="hint">Tap anywhere to pause</p>
@@ -120,8 +128,16 @@
 
     <!-- 3. Done: how was it, save -->
     <div class="stage" data-for="done" id="taste">
-      <div>
-        <h1>How was it?</h1>
+      <div class="enjoy">
+        <svg class="art cup" viewBox="0 0 48 48" aria-hidden="true">
+        <path class="steam" d="M18 16c0-3 3-3 3-6s-3-3-3-5"/>
+        <path class="steam" d="M25 16c0-3 3-3 3-6s-3-3-3-5"/>
+        <path d="M10 22h24v8a10 10 0 0 1-10 10h-4a10 10 0 0 1-10-10z"/>
+        <path d="M34 25h3a4 4 0 0 1 0 8h-3"/>
+        <path d="M8 44h30"/>
+      </svg>
+        <h1 class="big">Enjoy your cup.</h1>
+        <p class="lead">Take a sip first. How is it?</p>
         <p class="muted small" id="dName"></p>
       </div>
       <div class="moods" id="moods"></div>

@@ -19,8 +19,8 @@ A coffee recipe and brew timer. Plain HTML, CSS and ES-module JS with no build s
 - **Beans and history.** The bean shelf tracks the roast date and grams left (logging a brew subtracts its dose). Dial-in history shows the log for this recipe and bean, with what changed since the brew before.
 - **Taste feedback suggests one change.** Change one variable at a time, usually grind.
 - **UI copy is terse.** Use short imperative steps with exact numbers ("Pour to 150 g by 1:15."). No "why" paragraphs and no marketing text.
-- **Keep it small.** Each new feature must replace something or prove it is needed. Use system fonts only.
-- **Look: dark and moody, native-app feel.** System font, large titles, rounded cards, one warm crema accent (`--accent`). Brewer line drawings are the only illustrations. Original design: never copy another app's look (the user liked Aeromatic's feel, not its visuals).
+- **Keep it small.** Each new feature must replace something or prove it is needed.
+- **Look: cozy and slow.** Oat and espresso colours with one accent (cinnamon by day, crema at night; follows `prefers-color-scheme`). Fraunces (self-hosted in `fonts/`, the only web font) for titles and big numbers, the system sans for everything else. Soft rounded cards, slow eased motion, a steaming cup, and a brewing screen that fills like a cup until the next step. Brewing is a ritual, not a task: calm words, one thing per screen. Original design: never copy another app's look.
 - **Flow.** See DESIGN.md. Setup is one step (welcome and name). Tabs: Brew (home with recipe cards, brew in three stages), Beans, Journal. Every new question or control must replace something.
 
 ## Brewers

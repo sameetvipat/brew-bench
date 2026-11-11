@@ -153,12 +153,12 @@ One card per bag. It has a freshness bar (days off roast), a grams-left bar and 
 
 ## 5. Look and feel
 
-- **Mood:** an early-morning kitchen. Warm dark background, one crema accent, generous space.
-- **Type:** one system sans. Numbers are large and tabular. Step amounts are the biggest thing on any screen.
-- **Motion:** step cards slide up. The progress bar fills like water. Nothing bounces, and every animation respects "reduce motion".
+- **Mood:** a slow morning in a warm kitchen. Oat paper and espresso ink by day, a dim espresso room at night (follows the phone's light or dark setting). One accent: cinnamon by day, crema at night.
+- **Type:** Fraunces, a soft serif, for greetings, recipe names and the big step amounts. The system sans for everything else. Step amounts are the biggest thing on any screen.
+- **Brewing:** the screen fills from the bottom like a cup until the next step, so you feel the time instead of reading a bar.
+- **Motion:** slow and eased. Steam rises from the cup on home and on "Enjoy your cup." Nothing bounces, and everything respects "reduce motion".
 - **Sound and touch:** a soft two-note chime instead of beeps, and a short buzz at each step.
-- **Brewer drawings:** line drawings for brewers only. They match in stroke and weight, and are drawn once with care.
-- **Words:** short and kind. "Pour to 200 g." "Nice. Same again tomorrow?" No jargon on the main path.
+- **Words:** short and kind. "What shall we brew?" "Begin." "Enjoy your cup. Take a sip first."
 
 ## 6. What stays, changes and goes
 

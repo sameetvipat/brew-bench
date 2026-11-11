@@ -5,13 +5,14 @@
  *    the latest version, with no mix of old and new files. Offline, the copy answers.
  * Your brews and beans are not here: they live in the page's own storage.
  */
-const CACHE = "brew-bench-v4"; // bump to drop old copies (v2: network first, replaces v1's cache first)
+const CACHE = "brew-bench-v5"; // bump to drop old copies (v2: network first, replaces v1's cache first)
 
 const APP_FILES = [
   "./",
   "index.html",
   "style.css",
   "manifest.webmanifest",
+  "fonts/fraunces.woff2",
   "icons/icon-192.png",
   "icons/icon-512.png",
   "icons/apple-touch-icon.png",

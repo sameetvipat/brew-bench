@@ -14,7 +14,8 @@ Your data stays on your phone. The backup file (Journal tab) holds all of it.
 
 Files
   index.html          markup: setup, Brew tab (home, brew), Beans tab, Journal tab
-  style.css           look: dark, native-app feel
+  style.css           look: cozy oat and espresso, light and dark
+  fonts/              Fraunces (SIL Open Font License, see fonts/OFL.txt)
   sw.js               offline copy of the app
   js/main.js          entry point: loads recipes, starts each part
   js/router.js        which screen shows, from the URL hash
