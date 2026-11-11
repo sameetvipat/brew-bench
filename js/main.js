@@ -1,6 +1,6 @@
 /* Entry point: load the recipes, wire up each screen, then show the right one. */
 import { loadRecipes } from "./recipes.js";
-import { session, dropStaleRun } from "./state.js";
+import { state, session, dropStaleRun } from "./state.js";
 import { esc } from "./util.js";
 import { initSetup } from "./setup.js";
 import { initJournal } from "./journal.js";
@@ -12,7 +12,7 @@ import { initBackup } from "./backup.js";
 import { initRouter, route } from "./router.js";
 
 try {
-  session.recipes = await loadRecipes();
+  session.recipes = [...(await loadRecipes()), ...state.myRecipes]; // the same objects, so edits to yours save in place
 } catch (e) {
   document
     .querySelector(".app")

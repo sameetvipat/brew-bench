@@ -251,6 +251,11 @@ details[open] > summary::after { transform: rotate(180deg); }
 .mood[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 #offWhy p { margin: 0 0 8px; }
 #sugg { min-height: 1.4em; }
+.edit-rows { display: flex; flex-direction: column; gap: 6px; }
+.erow { display: grid; grid-template-columns: 1fr 44px 88px 44px; align-items: center; gap: 6px; }
+.erow button { height: 40px; border: 0; border-radius: 10px; background: var(--card); color: var(--accent); font-size: 1.3rem; cursor: pointer; }
+.erow b { text-align: center; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+#eSteps { font-family: ui-monospace, Menlo, monospace; font-size: .9rem; line-height: 1.6; }
 .link { padding: 0; border: 0; background: none; color: var(--accent); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .need b { font-size: 1.25rem; font-variant-numeric: tabular-nums; }
 #journalList h3 { margin: 18px 0 8px; }

@@ -12,6 +12,7 @@ export const CUP_CHOICES = [1, 2, 3, 4];
  * - bean      selected bean name ("" = none)
  * - tweaks    your version of each recipe, per cup: {dose, water, temp, grind, shift}, keyed by tweakKey()
  * - setupDone false until the welcome is done
+ * - myRecipes your own recipes: copies you made and edited, same shape as a parsed recipe file, mine: true
  * - cups      1–4
  * - beans     bean register: [{id, name, roast, g, left, rating 0–5}]
  * - run       brew in progress {recipeId, startedAt, batch}, so a 12 h cold brew survives closing the page
@@ -29,6 +30,7 @@ export const session = {
   draft: null, // {key, tweak}: a log entry being re-brewed; becomes a saved tweak only once you change something
   taste: null, // selected taste chip
   stage: "ready", // brew screen stage: ready, brewing, done
+  editNext: false, // open the edit panel on the next recipe opened
 };
 
 /** Save to this phone. Every save also updates the backup file a moment later, unless told not to. */
@@ -50,8 +52,17 @@ export function dropStaleRun() {
   if (state.run && !findRecipe(state.run.recipeId)) state.run = null;
 }
 
+/** An own recipe from storage or a backup: enough to build and brew it. */
+function isOwnRecipe(r) {
+  return (
+    r && typeof r.id === "string" && r.id.startsWith("my-") && typeof r.name === "string" &&
+    r.dose > 0 && r.water > 0 && r.temp > 0 && typeof r.grind === "string" &&
+    Array.isArray(r.steps) && r.steps.length >= 2 && r.steps.every((s) => typeof s.at === "number" && typeof s.text === "string")
+  );
+}
+
 function load() {
-  const fresh = { recipeId: null, bean: "", tweaks: {}, setupDone: false, cups: 1, beans: [], run: null, name: "" };
+  const fresh = { recipeId: null, bean: "", tweaks: {}, setupDone: false, cups: 1, beans: [], run: null, name: "", myRecipes: [] };
 
   let saved = null;
   try {
@@ -80,6 +91,7 @@ function load() {
     run: run && typeof run.recipeId === "string" && typeof run.startedAt === "number" ? run : null,
     name: typeof saved.name === "string" ? saved.name.slice(0, 40) : "",
     lastBackup: typeof saved.lastBackup === "number" ? saved.lastBackup : null,
+    myRecipes: Array.isArray(saved.myRecipes) ? saved.myRecipes.filter(isOwnRecipe) : [],
     backupAsked: saved.backupAsked === true,
   };
 }

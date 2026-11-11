@@ -69,6 +69,24 @@
         <ol class="steps" id="steps"></ol>
       </details>
 
+      <!-- Edit (js/brew.js): numbers for 1 cup; your own recipes also get a name and steps -->
+      <details class="card-box" id="editBox">
+        <summary>Edit recipe <span class="muted">for 1 cup</span></summary>
+        <label class="f" id="eNameRow"><span class="label">Name</span><input class="text" id="eName" maxlength="60"></label>
+        <div class="edit-rows" id="editRows"></div>
+        <label class="f"><span class="label">Grind</span><input class="text" id="eGrind" maxlength="80"></label>
+        <p class="muted small" id="editInfo"></p>
+        <label class="f" id="eStepsRow">
+          <span class="label">Steps, one per line: a time like 1:30, then what to do</span>
+          <textarea class="text" id="eSteps" rows="6"></textarea>
+        </label>
+        <p class="small" id="eStepsMsg" aria-live="polite"></p>
+        <div class="btns">
+          <button type="button" class="btn small" id="makeMine">Make it my own recipe</button>
+          <button type="button" class="btn small danger" id="deleteMine">Delete this recipe</button>
+        </div>
+      </details>
+
       <button type="button" class="text-btn" id="logNow">Log a brew without the timer</button>
     </div>
 

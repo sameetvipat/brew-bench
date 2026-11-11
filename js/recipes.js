@@ -96,14 +96,15 @@ export function batchCount(recipe, tweak, cups) {
 
 /**
  * A recipe ready to brew: your tweak (per cup) applied, then multiplied by cups.
- * Returns the recipe plus: cups, scale, tweaked, shift, and timeline [{at, text}] with real amounts.
+ * Returns the recipe plus: cups, tweaked, shift, and timeline [{at, text}] with real amounts.
  */
 export function buildRecipe(recipe, tweak, cups = 1) {
   const r = { ...recipe, shift: 0, ...tweak, tweaked: Boolean(tweak), cups };
+  const waterPerCup = r.water;
   r.dose *= cups;
   r.water = Math.round(r.water * cups);
-  r.scale = r.dose / recipe.dose;
-  for (const key of ["ice", "top"]) r[key] = Math.round((recipe[key] || 0) * r.scale);
+  // Top-up and ice keep the drink the same size: brew more concentrated, and they make up the difference.
+  for (const key of ["ice", "top"]) r[key] = recipe[key] ? Math.round(Math.max(0, recipe.water + recipe[key] - waterPerCup) * cups) : 0;
 
   const timeline = recipe.steps.map((step) => ({ at: step.at, text: fillAmounts(step.text, r) }));
 

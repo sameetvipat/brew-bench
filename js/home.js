@@ -17,7 +17,8 @@ export function drawHome() {
 function recipeCard(r) {
   const tags = [];
   if (state.run?.recipeId === r.id) tags.push("brewing");
-  if (r.tweaked) tags.push("yours");
+  if (r.mine) tags.push("mine");
+  else if (r.tweaked) tags.push("yours");
   if (r.drink === "milk") tags.push("milk");
   if (r.served === "iced") tags.push("iced");
 
