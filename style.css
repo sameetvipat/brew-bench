@@ -74,34 +74,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .greet { font-size: 2.2rem; margin-top: 8px; animation: greet .9s ease-out; }
 @keyframes greet { from { opacity: 0; transform: translateY(10px); letter-spacing: .02em; } }
 
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.brewer-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--card);
-  color: var(--ink);
-  text-align: left;
-  font: inherit;
-  cursor: pointer;
-  transition: transform .12s, border-color .12s;
-}
-.brewer-card:active { transform: scale(.97); }
-.brewer-card b { font-weight: 650; margin-top: 8px; }
-.brewer-card span { color: var(--muted); font-size: .85rem; }
-.brewer-card[aria-pressed="true"] { border-color: var(--accent); }
-.brewer-card[aria-pressed="true"]::after {
-  content: "✓";
-  position: absolute;
-  top: 12px;
-  right: 14px;
-  color: var(--accent);
-  font-weight: 700;
-}
 .art { width: 56px; height: 56px; fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 
 .banner {
@@ -131,10 +103,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .row-top b { font-weight: 600; }
 .notes { font-size: .9rem; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
 
-/* ---------- recipes of one brewer ---------- */
+/* ---------- recipe cards ---------- */
 
-.hero { display: flex; align-items: center; gap: 14px; margin-top: 4px; }
-.hero .art { width: 72px; height: 72px; }
 .cards { display: flex; flex-direction: column; gap: 12px; }
 .rcard {
   display: flex;
@@ -283,8 +253,6 @@ details[open] > summary::after { transform: rotate(180deg); }
 #sugg { min-height: 1.4em; }
 .link { padding: 0; border: 0; background: none; color: var(--accent); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .need b { font-size: 1.25rem; font-variant-numeric: tabular-nums; }
-details.more > summary { justify-content: center; gap: 8px; color: var(--muted); padding: 6px 0; }
-details.more[open] > summary { margin-bottom: 12px; }
 #journalList h3 { margin: 18px 0 8px; }
 .text-btn.inline { padding: 0; font-size: inherit; }
 .text-btn { align-self: center; padding: 8px; border: 0; background: none; color: var(--muted); font: inherit; font-size: .9rem; text-decoration: underline; cursor: pointer; }
@@ -355,8 +323,8 @@ details.more[open] > summary { margin-bottom: 12px; }
 .onboard { display: flex; flex-direction: column; gap: 16px; padding: 12px 0 8px; min-height: 52vh; }
 .onboard h1 { font-size: 1.9rem; }
 .onboard .lead { margin: -4px 0 0; }
-.hero-art { display: flex; flex-wrap: wrap; gap: 6px; margin: 6vh 0 8px; }
-.hero-art .art { width: 46px; height: 46px; }
+.hero-art { margin: 8vh 0 8px; }
+.hero-art .art { width: 84px; height: 84px; }
 .big-input { font-size: 1.3rem; padding: 14px 16px; }
 
 /* ---------- small screens, motion ---------- */

@@ -1,15 +1,13 @@
 /*
  * Brewing stage: one step card at a time, with the amount huge, counting down to the next step.
  * A soft chime and a buzz mark each new step; the screen stays awake; tap anywhere to pause.
- * The start time is saved (state.run), so a long brew keeps going after the page closes.
+ * The start time is saved (state.run), so leaving the screen mid-brew doesn't lose your place.
  */
 import { $, formatTime } from "./util.js";
 import { state, session, save } from "./state.js";
 import { setStage } from "./brew.js";
 
 const TICK_MS = 250;
-const LONG_BREW = 3600; // seconds; longer brews never hold the screen on
-const ASK_ALERTS_FROM = 300; // seconds; ask for notifications only on brews you'd walk away from
 
 let startedAt = 0; // Date.now() at 0:00
 let elapsed = 0; // seconds since 0:00
@@ -20,12 +18,8 @@ let batch = 1; // which batch is brewing, when a recipe needs more than one brew
 let wakeLock = null;
 let audio = null;
 
-// shortcut: locked-phone alerts work where the browser keeps timers running (Android, desktop);
-// iOS pauses the page, so they need a push server to be reliable there
-
 const timeline = () => session.current.timeline;
 const totalTime = () => timeline().at(-1).at;
-const isLongBrew = () => totalTime() >= LONG_BREW;
 const isRunning = () => interval !== null;
 const batchTotal = () => session.current.batches?.count || 1;
 
@@ -119,23 +113,6 @@ function chime(last = false) {
   }
 }
 
-/** A new step started: buzz, and show a notification when the page is hidden. */
-function alertStep(text) {
-  navigator.vibrate?.([120, 80, 120]);
-  if (!document.hidden || !("Notification" in window) || Notification.permission !== "granted") return;
-  const options = { body: text, tag: "brew-step", renotify: true };
-  navigator.serviceWorker
-    ?.getRegistration()
-    .then((reg) => (reg ? reg.showNotification("Brew Bench", options) : new Notification("Brew Bench", options)))
-    .catch(() => {}); // no notification; the chime and the card still work
-}
-
-function askForAlerts() {
-  if (totalTime() >= ASK_ALERTS_FROM && "Notification" in window && Notification.permission === "default") {
-    Notification.requestPermission().catch(() => {});
-  }
-}
-
 function holdScreenOn() {
   try {
     navigator.wakeLock?.request("screen").then((lock) => (wakeLock = lock)).catch(() => {});
@@ -161,7 +138,7 @@ function tick() {
   if (current !== lastStep) {
     if (lastStep > -1) {
       chime(current === timeline().length - 1);
-      alertStep(timeline()[current].text);
+      navigator.vibrate?.([120, 80, 120]);
     }
     lastStep = current;
   }
@@ -176,11 +153,10 @@ function start({ resume = false } = {}) {
     lastStep = stepAt(Math.floor(elapsed));
     if (!resume) chime();
   }
-  if (!resume) askForAlerts(); // needs a tap, so only from Start
   state.run = { recipeId: session.current.id, startedAt, batch };
   save();
   interval = setInterval(tick, TICK_MS);
-  if (!isLongBrew()) holdScreenOn(); // never hold the screen on for a 12 h steep
+  holdScreenOn();
   drawTimer();
 }
 
@@ -265,6 +241,6 @@ export function initTimer() {
 
   // The browser drops the wake lock when the page is hidden; take it again on return.
   document.addEventListener("visibilitychange", () => {
-    if (isRunning() && !isLongBrew() && !document.hidden) holdScreenOn();
+    if (isRunning() && !document.hidden) holdScreenOn();
   });
 }

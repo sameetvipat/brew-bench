@@ -1,9 +1,7 @@
 ---
 id: aero-adler
-brewer: aero
 drink: milk
 served: hot
-kind: imm
 name: AeroPress original, with milk or water
 src: Alan Adler (inventor), original recipe
 dose: 15

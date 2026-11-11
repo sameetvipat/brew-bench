@@ -12,10 +12,9 @@
 
 <!--
   Screens, one shown at a time (js/router.js):
-    #setup          setup: your name and brewers
-    (home)          Brew tab: greeting and your brewers
-    #brewer/aero    that brewer's recipe cards
-    #v60-tetsu      brew one recipe, in three stages: get ready, brewing, done
+    #setup          welcome and your name
+    (home)          Brew tab: greeting and your AeroPress recipes
+    #aero-hoff      brew one recipe, in three stages: get ready, brewing, done
     #beans          Beans tab: bean register
     #journal        Journal tab: your brews, newest first
   Empty containers are filled by the module named next to them.
@@ -31,30 +30,20 @@
     <button class="btn primary wide" id="obNext">Next</button>
   </section>
 
-  <!-- ===== Brew tab: home (js/home.js) ===== -->
+  <!-- ===== Brew tab: home, greeting and recipe cards (js/home.js) ===== -->
   <section id="home" class="screen" hidden>
     <header class="bar"><span></span></header>
     <h1 class="greet" id="greet"></h1>
-    <p class="lead">What are you brewing with today?</p>
+    <p class="lead">What are you brewing today?</p>
     <a class="banner" id="running" hidden></a>
-    <div class="grid2" id="brewerGrid"></div>
-    <a href="#setup" class="text-btn">Change your name or brewers</a>
-  </section>
-
-  <!-- ===== One brewer's recipes (js/recipelist.js) ===== -->
-  <section id="recipes" class="screen" hidden>
-    <header class="bar"><a href="#" class="back">‹ Brew</a></header>
-    <div class="hero">
-      <span id="bArt"></span>
-      <div><h1 id="bName"></h1><p class="muted" id="bCount"></p></div>
-    </div>
     <div class="cards" id="recipeCards"></div>
+    <a href="#setup" class="text-btn">Change your name</a>
   </section>
 
   <!-- ===== Brew a recipe (js/brew.js, js/timer.js, js/log.js) =====
        data-stage shows one stage at a time: ready, brewing, done -->
   <section id="brew" class="screen" data-stage="ready" hidden>
-    <header class="bar"><a href="#" class="back" id="brewBack">‹ Recipes</a></header>
+    <header class="bar"><a href="#" class="back">‹ Recipes</a></header>
 
     <!-- 1. Get ready: what you need, cups, bean, Start -->
     <div class="stage" data-for="ready">

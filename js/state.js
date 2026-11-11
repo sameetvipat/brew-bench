@@ -1,5 +1,4 @@
 /* Everything saved on this device, plus session state shared between screens. */
-import { BREWERS } from "./recipes.js";
 
 import { scheduleBackup } from "./backup.js";
 
@@ -12,7 +11,7 @@ export const CUP_CHOICES = [1, 2, 3, 4];
  * - recipeId  last opened recipe
  * - bean      selected bean name ("" = none)
  * - tweaks    your version of each recipe, per cup: {dose, water, temp, grind, shift}, keyed by tweakKey()
- * - brewers   brewers picked in setup (null = setup not done yet)
+ * - setupDone false until the welcome is done
  * - cups      1–4
  * - beans     bean register: [{id, name, roast, g, left, rating 0–5}]
  * - run       brew in progress {recipeId, startedAt, batch}, so a 12 h cold brew survives closing the page
@@ -52,7 +51,7 @@ export function dropStaleRun() {
 }
 
 function load() {
-  const fresh = { recipeId: null, bean: "", tweaks: {}, brewers: null, cups: 1, beans: [], run: null, name: "" };
+  const fresh = { recipeId: null, bean: "", tweaks: {}, setupDone: false, cups: 1, beans: [], run: null, name: "" };
 
   let saved = null;
   try {
@@ -70,13 +69,12 @@ function load() {
   };
   const recipeId = saved.recipeId ?? saved.rid;
   const tweaks = saved.tweaks ?? saved.tw;
-  const brewers = saved.brewers ?? saved.mine;
 
   return {
     recipeId: typeof recipeId === "string" ? recipeId : null,
     bean: typeof saved.bean === "string" ? saved.bean : "",
     tweaks: tweaks && typeof tweaks === "object" ? tweaks : {},
-    brewers: Array.isArray(brewers) && brewers.some((b) => b in BREWERS) ? brewers : null,
+    setupDone: saved.setupDone === true || Boolean(saved.brewers ?? saved.mine), // older saves: picking brewers meant setup was done
     cups: CUP_CHOICES.includes(saved.cups) ? saved.cups : 1,
     beans: Array.isArray(saved.beans) ? saved.beans.filter((b) => b && typeof b.name === "string" && b.left >= 0) : [],
     run: run && typeof run.recipeId === "string" && typeof run.startedAt === "number" ? run : null,

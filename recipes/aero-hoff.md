@@ -1,9 +1,7 @@
 ---
 id: aero-hoff
-brewer: aero
 drink: black
 served: hot
-kind: imm
 name: Hoffmann AeroPress
 src: James Hoffmann, Ultimate AeroPress
 dose: 11

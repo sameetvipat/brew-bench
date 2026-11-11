@@ -1,10 +1,7 @@
 ---
 id: aero-wendelboe
-brewer: aero
 drink: black
 served: hot
-kind: imm
-extra: true
 name: Tim Wendelboe AeroPress
 src: Tim Wendelboe, AeroPress brewing guide
 dose: 14

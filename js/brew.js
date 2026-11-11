@@ -5,7 +5,7 @@
  *   done     how was it, save (js/log.js)
  * Your version of a recipe comes from taste suggestions; there are no number controls on the main path.
  */
-import { BREWERS, LIMITS, clamp, buildRecipe, batchCount } from "./recipes.js";
+import { LIMITS, clamp, buildRecipe, batchCount } from "./recipes.js";
 import { state, session, save, tweakKey, findRecipe, CUP_CHOICES } from "./state.js";
 import { $, esc, formatTemp, formatTime } from "./util.js";
 import { drawTimer, startBrew, reset as stopBrew } from "./timer.js";
@@ -85,9 +85,6 @@ function resetToOriginal() {
 export function drawBrew() {
   const r = (session.current = recipeFor());
 
-  $("brewBack").href = `#brewer/${r.brewer}`;
-  $("brewBack").textContent = `‹ ${BREWERS[r.brewer]}`;
-  $("doneBack").href = `#brewer/${r.brewer}`;
   for (const id of ["rName", "tName", "dName"]) $(id).textContent = r.name;
   $("rSrc").textContent = r.src;
 
@@ -118,61 +115,30 @@ function needList(r) {
   const dose = r.batches?.dose ?? r.dose;
   const water = r.batches?.water ?? r.water;
   const ice = r.batches?.ice ?? r.ice;
-
-  const items = [`<b>${dose} g</b> coffee, ${esc(r.grind.toLowerCase())}${each}`];
-  if (r.out) items.push(`<b>${water} g</b> espresso out${each}`);
-  else if (r.temp == null) items.push(`<b>${water} g</b> cold water${each}`);
-  else items.push(`<b>${water} g</b> water, ${r.temp >= 100 ? "just boiled" : `at ${formatTemp(r.temp)}`}${each}`);
+  const items = [
+    `<b>${dose} g</b> coffee, ${esc(r.grind.toLowerCase())}${each}`,
+    `<b>${water} g</b> water, ${r.temp >= 100 ? "just boiled" : `at ${formatTemp(r.temp)}`}${each}`,
+  ];
   if (ice) items.push(`<b>${ice} g</b> ice${each}`);
-  if (r.milk) items.push(`<b>${r.milk} g</b> milk`);
   return items;
 }
 
 /** "An AeroPress holds about 250 g of water, so this brews in 2 batches, one after the other." */
 function batchNote(r) {
-  const why = r.brewer === "esp" ? "Espresso is one shot per cup" : "An AeroPress holds about 250 g of water";
-  return `${why}, so this brews in ${r.batches.count} batches, one after the other.`;
+  return `An AeroPress holds about 250 g of water, so this brews in ${r.batches.count} batches, one after the other.`;
 }
 
 /* ---------- taste: one change to try next time ---------- */
 
-const GRIND_FINER = ["Grind one step finer next time.", null];
-const GRIND_COARSER = ["Grind one step coarser next time.", null];
-
-/** For sour, bitter, weak or strong: returns [advice, change or null]. Changes are totals: per-cup amounts times cups. */
+/** For sour, bitter, weak or strong: returns [advice, change]. Changes are totals: per-cup amounts times cups. */
 export function suggestChange(taste, r) {
   const cups = r.cups;
-  const moreCoffee = ["Add 1 g coffee per cup, same water.", { dose: r.dose + cups }];
-  const moreWater = ["Add 15 g water per cup.", { water: r.water + 15 * cups }];
-
-  const byKind = {
-    imm: {
-      sour: ["Steep 15 s longer.", { shift: r.shift + 15 }],
-      bitter: ["Steep 15 s shorter and 2°C cooler.", { shift: r.shift - 15, temp: r.temp - 2 }],
-      weak: moreCoffee,
-      strong: moreWater,
-    },
-    perc: { sour: GRIND_FINER, bitter: GRIND_COARSER, weak: moreCoffee, strong: moreWater },
-    esp: {
-      sour: GRIND_FINER,
-      bitter: GRIND_COARSER,
-      weak: ["Pull shorter: 2 g less out per cup.", { water: r.water - 2 * cups }],
-      strong: ["Pull longer: 4 g more out per cup.", { water: r.water + 4 * cups }],
-    },
-    filter: {
-      sour: ["Pack the powder a little firmer.", null],
-      bitter: ["Use less decoction, more milk.", null],
-      weak: moreCoffee,
-      strong: ["Use more milk per cup.", null],
-    },
-    cold: {
-      sour: ["Steep 2 h longer.", null],
-      bitter: ["Steep 2 h shorter, or grind coarser.", null],
-      weak: ["Dilute less.", null],
-      strong: ["Dilute more.", null],
-    },
-  };
-  return byKind[r.kind][taste];
+  return {
+    sour: ["Steep 15 s longer.", { shift: r.shift + 15 }],
+    bitter: ["Steep 15 s shorter and 2°C cooler.", { shift: r.shift - 15, temp: r.temp - 2 }],
+    weak: ["Add 1 g coffee per cup, same water.", { dose: r.dose + cups }],
+    strong: ["Add 15 g water per cup.", { water: r.water + 15 * cups }],
+  }[taste];
 }
 
 /** Loved it / Fine / Something's off. Only "off" asks what was off, then gives one suggestion. */
@@ -197,9 +163,8 @@ function drawTaste() {
     $("sugg").textContent = "";
     return;
   }
-  const [advice, change] = suggestChange(taste, session.current);
-  const useButton = change ? '<button type="button" class="link" id="apply">Use it next time</button>' : "";
-  $("sugg").innerHTML = `${advice} ${useButton}`;
+  const [advice] = suggestChange(taste, session.current);
+  $("sugg").innerHTML = `${advice} <button type="button" class="link" id="apply">Use it next time</button>`;
 }
 
 export function clearTaste() {

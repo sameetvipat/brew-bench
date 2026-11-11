@@ -1,9 +1,7 @@
 ---
 id: aero-iced
-brewer: aero
 drink: black
 served: iced
-kind: imm
 name: Iced AeroPress, flash brew
 src: AeroPress, Japanese-inspired iced coffee
 dose: 16

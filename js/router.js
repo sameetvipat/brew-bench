@@ -1,41 +1,37 @@
 /*
  * Screens by URL hash:
  *   ""             home
- *   #setup         change your brewers (setup step 2; forced from step 1 on first run)
- *   #welcome       the whole setup again from step 1
+ *   #setup         change your name (forced as a welcome on first run)
+ *   #welcome       the welcome again
  *   #beans         Beans tab: bean register
  *   #journal       Journal tab: your brews
- *   #brewer/aero   that brewer's recipes
- *   #v60-tetsu     brew screen for one recipe
+ *   #aero-hoff     brew screen for one recipe
  */
-import { BREWERS } from "./recipes.js";
 import { state, session, findRecipe } from "./state.js";
 import { $ } from "./util.js";
 import { openBrew } from "./brew.js";
 import { drawHome } from "./home.js";
 import { drawSetup } from "./setup.js";
-import { drawRecipeList } from "./recipelist.js";
 import { drawShelf } from "./shelf.js";
 import { leaveTimer, enterTimer } from "./timer.js";
 import { drawJournal } from "./journal.js";
 import { icon } from "./icons.js";
 
-const SCREENS = ["setup", "home", "recipes", "brew", "beans", "journal"];
-const TAB_FOR = { home: "home", recipes: "home", beans: "beans", journal: "journal" }; // screens that show the bottom tabs
+const SCREENS = ["setup", "home", "brew", "beans", "journal"];
+const TAB_FOR = { home: "home", beans: "beans", journal: "journal" }; // screens that show the bottom tabs
 
 function screenFor(hash) {
-  const [name, arg] = hash.split("/");
-  if (!state.brewers || name === "welcome") return { screen: "setup", fromStart: true };
+  const name = hash.split("/")[0];
+  if (!state.setupDone || name === "welcome") return { screen: "setup", fromStart: true };
   if (name === "setup") return { screen: "setup" };
   if (name === "beans") return { screen: "beans" };
   if (name === "journal" || name === "log") return { screen: "journal" };
-  if (name === "brewer" && arg in BREWERS) return { screen: "recipes", brewer: arg };
   if (findRecipe(name)) return { screen: "brew", recipeId: name };
   return { screen: "home" };
 }
 
 export function route() {
-  const { screen, brewer, recipeId, fromStart } = screenFor(decodeURIComponent(location.hash.slice(1)));
+  const { screen, recipeId, fromStart } = screenFor(decodeURIComponent(location.hash.slice(1)));
 
   leaveTimer();
   // a re-brew draft belongs to one recipe; drop it anywhere else
@@ -43,7 +39,6 @@ export function route() {
 
   if (screen === "setup") drawSetup(fromStart);
   if (screen === "home") drawHome();
-  if (screen === "recipes") drawRecipeList(brewer);
   if (screen === "beans") drawShelf();
   if (screen === "journal") drawJournal();
   if (screen === "brew") {

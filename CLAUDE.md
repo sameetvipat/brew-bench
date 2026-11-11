@@ -21,13 +21,11 @@ A coffee recipe and brew timer. Plain HTML, CSS and ES-module JS with no build s
 - **UI copy is terse.** Use short imperative steps with exact numbers ("Pour to 150 g by 1:15."). No "why" paragraphs and no marketing text.
 - **Keep it small.** Each new feature must replace something or prove it is needed. Use system fonts only.
 - **Look: dark and moody, native-app feel.** System font, large titles, rounded cards, one warm crema accent (`--accent`). Brewer line drawings are the only illustrations. Original design: never copy another app's look (the user liked Aeromatic's feel, not its visuals).
-- **Flow.** See DESIGN.md. Setup is two steps (name, brewers). Tabs: Brew (home, brewer, brew in three stages), Beans, Journal. Every new question or control must replace something.
+- **Flow.** See DESIGN.md. Setup is one step (welcome and name). Tabs: Brew (home with recipe cards, brew in three stages), Beans, Journal. Every new question or control must replace something.
 
 ## Brewers
 
-- Mine: AeroPress, muslin cloth, South Indian filter.
-- Friend's: V60, espresso, channi.
-- Add others only on request.
+- AeroPress only, by choice: the user stripped the other brewers to keep the app simple. Git history has their recipes and code (V60, espresso, muslin, filter, channi); add one back only on request.
 
 ## Checks
 

@@ -1,8 +1,7 @@
-/* Brew tab (home): a greeting and "what are you brewing with today?" with your brewers. */
-import { BREWERS } from "./recipes.js";
+/* Brew tab (home): a greeting and your AeroPress recipes as cards. */
 import { state, session, findRecipe } from "./state.js";
-import { $, esc, greeting, clockTime, plural } from "./util.js";
-import { icon } from "./icons.js";
+import { $, esc, greeting, clockTime, formatTime } from "./util.js";
+import { recipeFor } from "./brew.js";
 
 export function drawHome() {
   const greet = $("greet");
@@ -12,19 +11,27 @@ export function drawHome() {
   greet.style.animation = "";
 
   drawRunningBanner();
-
-  const lastBrewer = findRecipe(state.recipeId)?.brewer;
-  $("brewerGrid").innerHTML = state.brewers
-    .map((brewer) => {
-      const count = session.recipes.filter((r) => r.brewer === brewer).length;
-      const note = brewer === lastBrewer ? "last used" : plural(count, "recipe");
-      return `<a class="brewer-card" href="#brewer/${brewer}">${icon(brewer)}<b>${BREWERS[brewer]}</b><span>${note}</span></a>`;
-    })
-    .join("");
-
+  $("recipeCards").innerHTML = session.recipes.map((r) => recipeCard(recipeFor(r.id, state.bean, 1))).join(""); // cards show 1 cup
 }
 
-/** A long brew (cold brew, kaapi) keeps running after you leave; show it on top. */
+function recipeCard(r) {
+  const tags = [];
+  if (state.run?.recipeId === r.id) tags.push("brewing");
+  if (r.tweaked) tags.push("yours");
+  if (r.drink === "milk") tags.push("milk");
+  if (r.served === "iced") tags.push("iced");
+
+  return `
+    <a class="rcard${state.recipeId === r.id ? " last" : ""}" href="#${r.id}">
+      <div class="rcard-top">
+        <b>${esc(r.name)}</b>
+        <span class="tags">${tags.map((t) => `<span class="tag">${t}</span>`).join("")}</span>
+      </div>
+      <p class="src">${r.dose} g coffee to ${r.water} g, ${formatTime(r.timeline.at(-1).at)}</p>
+    </a>`;
+}
+
+/** If you left during a brew, it keeps running; show it on top. */
 function drawRunningBanner() {
   const recipe = state.run && findRecipe(state.run.recipeId);
   $("running").hidden = !recipe;

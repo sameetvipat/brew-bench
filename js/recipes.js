@@ -1,20 +1,10 @@
 /*
- * Recipes live in recipes/*.md (format: recipes/README.md).
+ * AeroPress recipes live in recipes/*.md (format: recipes/README.md).
  * This module reads them, checks them, and scales them. Scaling is the only maths:
  * no guessed corrections for roast, bean age or water.
  */
 
-export const BREWERS = {
-  aero: "AeroPress",
-  cloth: "Muslin cloth",
-  filter: "South Indian filter",
-  v60: "V60",
-  esp: "Espresso",
-  channi: "Channi",
-};
-
-const KINDS = ["imm", "perc", "esp", "filter", "cold"]; // immersion, pour-over, espresso, drip filter, cold brew
-const REQUIRED = ["id", "brewer", "kind", "drink", "served", "name", "src", "dose", "water", "grind"];
+const REQUIRED = ["id", "drink", "served", "name", "src", "dose", "water", "grind", "temp"];
 export const DRINKS = { black: "Black", milk: "With milk" };
 export const SERVED = { hot: "Hot", iced: "Iced" };
 
@@ -54,7 +44,7 @@ export function parseRecipe(text, file) {
     if (colon < 0) continue;
     const key = line.slice(0, colon).trim();
     const value = line.slice(colon + 1).trim();
-    recipe[key] = parseValue(key, value);
+    recipe[key] = value === "" ? null : isNaN(value) ? value : Number(value);
   }
 
   recipe.steps = [...body.matchAll(/^- (\d+(?::\d{2}){1,2}) (.+)$/gm)].map(([, time, text]) => ({
@@ -65,16 +55,14 @@ export function parseRecipe(text, file) {
   for (const key of REQUIRED) {
     if (recipe[key] == null) throw new Error(`${file}: missing "${key}"`);
   }
-  if (!(recipe.brewer in BREWERS)) throw new Error(`${file}: unknown brewer "${recipe.brewer}"`);
-  if (!KINDS.includes(recipe.kind)) throw new Error(`${file}: kind must be one of ${KINDS.join(", ")}`);
   if (!(recipe.drink in DRINKS)) throw new Error(`${file}: drink must be one of ${Object.keys(DRINKS).join(", ")}`);
   if (!(recipe.served in SERVED)) throw new Error(`${file}: served must be one of ${Object.keys(SERVED).join(", ")}`);
-  if (!(recipe.dose > 0 && recipe.water > 0)) throw new Error(`${file}: dose and water must be numbers`);
+  if (!(recipe.dose > 0 && recipe.water > 0 && recipe.temp > 0)) throw new Error(`${file}: dose, water and temp must be numbers`);
   if (recipe.steps.length < 2 || recipe.steps[0].at !== 0) throw new Error(`${file}: needs 2+ steps, the first at 0:00`);
 
   for (const step of recipe.steps) {
     try {
-      fillAmounts(step.text, { dose: 1, water: 1, milk: 1, ice: 1, top: 1, brew: 1 });
+      fillAmounts(step.text, { dose: 1, water: 1, ice: 1, top: 1 });
     } catch (e) {
       throw new Error(`${file}: ${e.message}`);
     }
@@ -82,16 +70,7 @@ export function parseRecipe(text, file) {
   return recipe;
 }
 
-function parseValue(key, value) {
-  if (value === "" || (key === "temp" && value === "cold")) return null;
-  if (value === "true") return true;
-  return isNaN(value) ? value : Number(value);
-}
-
-/**
- * Replace amount placeholders in step text: "{water*0.6}" becomes a number.
- * Variables: dose, water, milk, ice, top, brew (water left after the grounds hold some back).
- */
+/** Replace amount placeholders in step text: "{water*0.6}" becomes a number. Variables: dose, water, ice, top. */
 export function fillAmounts(text, amounts) {
   return text.replace(/\{(\w+)((?:[*/][\d.]+)*)\}/g, (_, name, ops) => {
     if (!(name in amounts)) throw new Error(`unknown {${name}}`);
@@ -104,15 +83,12 @@ export function fillAmounts(text, amounts) {
 
 /* ---------- batches ---------- */
 
-/** What one brew can hold. AeroPress: about 250 g of water. Espresso: one cup per shot. Others: no limit. */
-const BATCH_LIMIT = { aero: { water: 250 }, esp: { cups: 1 } };
+const AEROPRESS_WATER = 250; // what one AeroPress holds, roughly
 
 /** How many separate brews it takes to make this many cups. */
 export function batchCount(recipe, tweak, cups) {
-  const limit = BATCH_LIMIT[recipe.brewer];
-  if (!limit) return 1;
   const perCupWater = tweak?.water ?? recipe.water;
-  const cupsPerBatch = limit.cups ?? Math.max(1, Math.floor(limit.water / perCupWater));
+  const cupsPerBatch = Math.max(1, Math.floor(AEROPRESS_WATER / perCupWater));
   return Math.ceil(cups / cupsPerBatch);
 }
 
@@ -127,23 +103,13 @@ export function buildRecipe(recipe, tweak, cups = 1) {
   r.dose *= cups;
   r.water = Math.round(r.water * cups);
   r.scale = r.dose / recipe.dose;
-  for (const key of ["milk", "ice", "top"]) r[key] = Math.round((recipe[key] || 0) * r.scale);
+  for (const key of ["ice", "top"]) r[key] = Math.round((recipe[key] || 0) * r.scale);
 
-  const amounts = {
-    dose: r.dose,
-    water: r.water,
-    milk: r.milk,
-    ice: r.ice,
-    top: r.top,
-    brew: r.water - r.dose * (recipe.retain || 0),
-  };
-  const timeline = recipe.steps.map((step) => ({ at: step.at, text: fillAmounts(step.text, amounts) }));
+  const timeline = recipe.steps.map((step) => ({ at: step.at, text: fillAmounts(step.text, r) }));
 
-  // Immersion: "shift" moves every step after the pour, so the steep gets longer or shorter. Never before 0:05.
-  if (r.kind === "imm") {
-    r.shift = clamp(r.shift, [Math.max(-60, 5 - timeline[1].at), 300]);
-    for (const step of timeline.slice(1)) step.at += r.shift;
-  }
+  // "shift" moves every step after the pour, so the steep gets longer or shorter. Never before 0:05.
+  r.shift = clamp(r.shift, [Math.max(-60, 5 - timeline[1].at), 300]);
+  for (const step of timeline.slice(1)) step.at += r.shift;
 
   r.timeline = timeline;
   return r;

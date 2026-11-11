@@ -3,10 +3,9 @@
  * 1. Offline: keeps a copy of the app (code, styles, recipes) so it opens with no connection.
  *    Online, every request goes to the network first and refreshes the copy, so you always get
  *    the latest version, with no mix of old and new files. Offline, the copy answers.
- * 2. Step notifications while the screen is locked, and bringing the app back when one is tapped.
  * Your brews and beans are not here: they live in the page's own storage.
  */
-const CACHE = "brew-bench-v3"; // bump to drop old copies (v2: network first, replaces v1's cache first)
+const CACHE = "brew-bench-v4"; // bump to drop old copies (v2: network first, replaces v1's cache first)
 
 const APP_FILES = [
   "./",
@@ -20,7 +19,6 @@ const APP_FILES = [
   "js/router.js",
   "js/setup.js",
   "js/home.js",
-  "js/recipelist.js",
   "js/brew.js",
   "js/timer.js",
   "js/journal.js",
@@ -74,12 +72,5 @@ self.addEventListener("fetch", (event) => {
         throw new Error(`offline and not saved: ${request.url}`);
       }
     })(),
-  );
-});
-
-self.addEventListener("notificationclick", (event) => {
-  event.notification.close();
-  event.waitUntil(
-    self.clients.matchAll({ type: "window" }).then((windows) => (windows[0] ? windows[0].focus() : self.clients.openWindow("./"))),
   );
 });
